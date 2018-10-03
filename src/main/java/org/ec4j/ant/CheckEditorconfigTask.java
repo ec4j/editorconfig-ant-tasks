@@ -45,17 +45,18 @@ public class CheckEditorconfigTask extends AbstractEditorconfigTask {
     /** {@inheritDoc} */
     @Override
     protected ViolationHandler createHandler() {
-        return new ViolationCollector(failOnFormatViolation, "mvn editorconfig:format");
+        return new ViolationCollector(failOnFormatViolation, "ant editorconfigFormat", log);
     }
 
     /** {@inheritDoc} */
     @Override
     protected Resource createResource(Path absFile, Path relFile, Charset encoding) {
-        if (log.isTraceEnabled()) {
-            log.trace("Creating a {} for path '{}' with encoding '{}'", Resource.class.getSimpleName(), relFile,
-                    encoding);
-        }
+        log.debug("Creating a {} for path '{}' with encoding '{}'", Resource.class.getSimpleName(), relFile, encoding);
         return new Resource(absFile, relFile, encoding);
+    }
+
+    public void setFailOnFormatViolation(boolean failOnFormatViolation) {
+        this.failOnFormatViolation = failOnFormatViolation;
     }
 
 }

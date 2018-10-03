@@ -19,15 +19,14 @@ package org.ec4j.ant;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.DirectoryScanner;
 import org.apache.tools.ant.Task;
+import org.apache.tools.ant.types.FileSet;
+import org.ec4j.ant.AntLintLogger.Level;
 import org.ec4j.core.Cache.Caches;
 import org.ec4j.core.Resource.Resources;
 import org.ec4j.core.ResourceProperties;
@@ -37,10 +36,9 @@ import org.ec4j.maven.lint.api.Constants;
 import org.ec4j.maven.lint.api.FormatException;
 import org.ec4j.maven.lint.api.Linter;
 import org.ec4j.maven.lint.api.LinterRegistry;
+import org.ec4j.maven.lint.api.Logger;
 import org.ec4j.maven.lint.api.Resource;
 import org.ec4j.maven.lint.api.ViolationHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A base for {@link CheckEditorconfigTask} and {@link FormatEditorconfigTask}
@@ -49,15 +47,13 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractEditorconfigTask extends Task {
 
-    protected static final Logger log = LoggerFactory.getLogger(AbstractEditorconfigTask.class.getPackage().getName());
-
     /**
      * If set to {@code true}, the class path will be scanned for implementations of {@link Linter} and all
      * {@link Linter}s found will be added to {@link #linters} with their default includes and excludes.
      *
      * @since 0.0.1
      */
-    protected boolean addLintersFromClassPath;
+    protected boolean addLintersFromClassPath = true;
 
     /** The result of {@code basedir.toPath()} */
     protected Path basedirPath;
@@ -81,15 +77,6 @@ public abstract class AbstractEditorconfigTask extends Task {
      * @since 0.0.1
      */
     protected boolean excludeNonSourceFiles;
-
-    /**
-     * File patterns to exclude from the set of files to process. The patterns are relative to the current project's
-     * {@code baseDir}. See also {@link #excludeNonSourceFiles} and {@link #excludeSubmodules}.
-     *
-     * @since 0.0.1
-     */
-    protected String[] excludes;
-
     /**
      * If {@code true} the plugin execution will fail with an error in case no single {@code .editorconfig} property
      * matches any file of the current Maven project - this usually means that there is no {@code .editorconfig} file in
@@ -100,12 +87,11 @@ public abstract class AbstractEditorconfigTask extends Task {
     protected boolean failOnNoMatchingProperties = true;
 
     /**
-     * File patterns to include into the set of files to process. The patterns are relative to the current project's
-     * {@code baseDir}.
+     * File patterns to include/exclude from the set of files to process. See also {@link #excludeNonSourceFiles} and {@link #excludeSubmodules}.
      *
      * @since 0.0.1
      */
-    protected String[] includes;
+    protected List<FileSet> filesets = new ArrayList<>();
 
     /**
      * Set the includes and excludes for the individual {@link Linter}s
@@ -114,13 +100,21 @@ public abstract class AbstractEditorconfigTask extends Task {
      */
     protected List<LinterConfig> linters = new ArrayList<>();
 
+    protected Logger log = new AntLintLogger(this, Level.INFO);
+
+    protected Level logLevel = Level.INFO;
+
     public AbstractEditorconfigTask() {
         super();
     }
 
+    public void addFileset(FileSet fileset) {
+        filesets.add(fileset);
+    }
+
     protected LinterRegistry buildLinterRegistry() {
 
-        final LinterRegistry.Builder linterRegistryBuilder = LinterRegistry.builder();
+        final LinterRegistry.Builder linterRegistryBuilder = LinterRegistry.builder().log(log);
 
         if (addLintersFromClassPath) {
             linterRegistryBuilder.scan(getClass().getClassLoader());
@@ -142,6 +136,10 @@ public abstract class AbstractEditorconfigTask extends Task {
     }
 
     protected abstract ViolationHandler createHandler();
+
+    public List<LinterConfig> createLinters() {
+        return this.linters = new ArrayList<>();
+    }
 
     /**
      * @param absFile  the {@link Path} to create a {@link Resource} for. Must be absolute.
@@ -168,7 +166,7 @@ public abstract class AbstractEditorconfigTask extends Task {
         this.basedirPath = getProject().getBaseDir().toPath();
 
         LinterRegistry linterRegistry = buildLinterRegistry();
-        final String[] includedFiles = scanIncludedFiles();
+        final List<Path> includedFiles = scanIncludedFiles();
 
         try {
             final ViolationHandler handler = createHandler();
@@ -178,24 +176,22 @@ public abstract class AbstractEditorconfigTask extends Task {
                     .build();
             handler.startFiles();
             boolean propertyMatched = false;
-            for (String includedPath : includedFiles) {
-                final Path file = Paths.get(includedPath); // relative to basedir
+            for (Path file : includedFiles) {
+                // file relative to basedir
                 final Path absFile = basedirPath.resolve(file);
-                log.debug("Processing file '{}'", file);
+                log.info("Processing file '{}'", file);
                 final ResourceProperties editorConfigProperties = resourcePropertiesService
                         .queryProperties(Resources.ofPath(absFile, charset));
                 if (!editorConfigProperties.getProperties().isEmpty()) {
                     propertyMatched = true;
                     final Charset useEncoding = Charset
-                            .forName(editorConfigProperties.getValue(PropertyType.charset, encoding, true));
+                            .forName(editorConfigProperties.getValue(PropertyType.charset, charset.name(), true));
                     final Resource resource = createResource(absFile, file, useEncoding);
                     final List<Linter> filteredLinters = linterRegistry.filter(file);
                     ViolationHandler.ReturnState state = ViolationHandler.ReturnState.RECHECK;
                     while (state != ViolationHandler.ReturnState.FINISHED) {
                         for (Linter linter : filteredLinters) {
-                            if (log.isTraceEnabled()) {
-                                log.trace("Processing file '{}' using linter {}", file, linter.getClass().getName());
-                            }
+                            log.trace("Processing file '{}' using linter {}", file, linter.getClass().getName());
                             handler.startFile(resource);
                             linter.process(resource, editorConfigProperties, handler);
                         }
@@ -203,18 +199,18 @@ public abstract class AbstractEditorconfigTask extends Task {
                     }
                 }
             }
+            handler.endFiles();
             if (!propertyMatched) {
                 if (failOnNoMatchingProperties) {
-                    log.error("No .editorconfig properties applicable for files under '{}'", basedirPath);
+                    throw new BuildException(String.format("No .editorconfig properties applicable for files under '{}'", basedirPath), getLocation());
                 } else {
                     log.warn("No .editorconfig properties applicable for files under '{}'", basedirPath);
                 }
             }
-            handler.endFiles();
         } catch (IOException e) {
             throw new BuildException(e.getMessage(), e);
         } catch (FormatException e) {
-            throw new BuildException("\n\n" + e.getMessage() + "\n\n", e);
+            throw new BuildException("\n\n" + e.getMessage() + "\n\n", e, getLocation());
         }
 
     }
@@ -224,23 +220,46 @@ public abstract class AbstractEditorconfigTask extends Task {
      *
      * @return A {@link String} array of included files
      */
-    private String[] scanIncludedFiles() {
-        final DirectoryScanner scanner = new DirectoryScanner();
-        scanner.setBasedir(getProject().getBaseDir());
-        scanner.setIncludes(includes);
-
-        Set<String> excls = new LinkedHashSet<>();
-        if (excludeNonSourceFiles) {
-            excls.addAll(Constants.DEFAULT_EXCLUDES);
+    private List<Path> scanIncludedFiles() {
+        final List<Path> result = new ArrayList<>();
+        if (filesets.isEmpty()) {
+            final FileSet fs = new FileSet();
+            fs.setDir(getProject().getBaseDir());
+            filesets.add(fs);
         }
-        if (excludes != null && excludes.length > 0) {
-            for (String include : excludes) {
-                excls.add(include);
+        final Path basedirPath = getProject().getBaseDir().toPath();
+        for (FileSet fs : filesets) {
+            if (excludeNonSourceFiles) {
+                fs.appendExcludes(Constants.DEFAULT_EXCLUDES.toArray(new String[0]));
+            }
+            final DirectoryScanner ds = fs.getDirectoryScanner(getProject());
+            final Path dir = fs.getDir().toPath();
+            for (String includedFile : ds.getIncludedFiles()) {
+                final Path absPath = dir.resolve(includedFile);
+                result.add(basedirPath.relativize(absPath));
             }
         }
-        scanner.setExcludes(excls.toArray(new String[0]));
+        return result;
+    }
 
-        scanner.scan();
-        return scanner.getIncludedFiles();
+    public void setAddLintersFromClassPath(boolean addLintersFromClassPath) {
+        this.addLintersFromClassPath = addLintersFromClassPath;
+    }
+
+    public void setEncoding(String encoding) {
+        this.encoding = encoding;
+    }
+
+    public void setExcludeNonSourceFiles(boolean excludeNonSourceFiles) {
+        this.excludeNonSourceFiles = excludeNonSourceFiles;
+    }
+
+    public void setFailOnNoMatchingProperties(boolean failOnNoMatchingProperties) {
+        this.failOnNoMatchingProperties = failOnNoMatchingProperties;
+    }
+
+    public void setLogLevel(Level logLevel) {
+        this.logLevel = logLevel;
+        this.log = new AntLintLogger(this, logLevel);
     }
 }
