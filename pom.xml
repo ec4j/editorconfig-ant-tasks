@@ -21,7 +21,7 @@
 
   <groupId>org.ec4j.ant</groupId>
   <artifactId>editorconfig-ant-tasks</artifactId>
-  <version>0.0.1</version>
+  <version>0.0.2-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>EditorConfig Ant tasks</name>
@@ -49,7 +49,7 @@
     <connection>scm:git:git@github.com:ec4j/editorconfig-ant-tasks.git</connection>
     <developerConnection>scm:git:git@github.com:ec4j/editorconfig-ant-tasks.git</developerConnection>
     <url>https://github.com/ec4j/editorconfig-ant-tasks</url>
-    <tag>0.0.1</tag>
+    <tag>head</tag>
   </scm>
   <issueManagement>
     <system>GitHub Issues</system>
