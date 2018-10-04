@@ -10,10 +10,10 @@ Central]]
 http://travis-ci.org/ec4j/editorconfig-ant-tasks[image:https://img.shields.io/travis/ec4j/editorconfig-ant-tasks/master.svg?logo=travis&color=white&label=Travis+CI[Travis CI build status]]
 https://ci.appveyor.com/project/ppalaga/editorconfig-ant-tasks[image:https://img.shields.io/appveyor/ci/ppalaga/editorconfig-ant-tasks/master.svg?logo=appveyor&color=white&label=AppVeyor+Windows+CI[AppVeyor Windows CI build status]]
 
-`editorconfig-ant-tasks` is a Maven plugin for checking whether project files comply with format rules
+`editorconfig-ant-tasks` provides https://ant.apache.org/[Ant] tasks for checking whether project files comply with format rules
 defined in `http://editorconfig.org/[.editorconfig]` files and eventually also for fixing the violations.
 
-WARNING: `editorconfig-ant-tasks` is new. Expect issues of all kinds which is not to say that you should not
+WARNING: `editorconfig-ant-tasks` are new. Expect issues of all kinds which is not to say that you should not
 https://github.com/ec4j/editorconfig-ant-tasks/issues[report] them :)
 
 
@@ -21,18 +21,52 @@ https://github.com/ec4j/editorconfig-ant-tasks/issues[report] them :)
 
 `editorconfig-ant-tasks` requires Java 7+ and Ant 1.8.0+.
 
-To make the build fail if any of your source files does not comply with `.editorconfig` rules, add the following to your project:
+A basic `build.xml` file:
 
 [source,xml]
 ----
-  <!-- TODO: Ant example -->
+<project name="editorconfig-example" basedir="." xmlns:ec4j="antlib:org.ec4j.ant">
+
+  <taskdef uri="antlib:org.ec4j.ant" resource="org/ec4j/ant/antlib.xml">
+    <classpath>
+      <fileset dir="...">
+        <include name="editorconfig-ant-tasks-*.jar"/>
+        <include name="libs/*.jar"/>
+        <!-- the libs directory should contain:
+            antlr4-runtime-4.7.jar
+            ec4j-core-0.0.1.jar
+            ec4j-lint-api-0.0.6.jar
+            ec4j-linters-0.0.6.jar
+        -->
+      </fileset>
+    </classpath>
+  </taskdef>
+
+  <target name="editorconfigCheck">
+    <!-- This checks whether the source tree complies with the rules defined in the .editorconfig file -->
+    <ec4j:editorconfigCheck />
+  </target>
+
+  <target name="editorconfigFormat">
+    <!-- This fixes any violations against the rules defined in the .editorconfig file -->
+    <ec4j:editorconfigFormat />
+  </target>
+
+</project>
+----
+
+To check whether any of your source files does not comply with `.editorconfig` rules run
+
+[source,shell]
+----
+ant editorconfigCheck
 ----
 
 In case any violations are detected, you may want to fix them automagically by running
 
 [source,shell]
 ----
-TODO: Ant example
+ant editorconfigFormat
 ----
 
 == Configuration
