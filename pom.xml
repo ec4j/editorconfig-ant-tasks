@@ -389,7 +389,7 @@ limitations under the License.</inlineHeader>
           <configuration>
             <tagNameFormat>@{project.version}</tagNameFormat>
             <preparationGoals>package</preparationGoals>
-            <goals>deploy site</goals>
+            <goals>deploy</goals>
             <releaseProfiles>release</releaseProfiles>
             <autoVersionSubmodules>true</autoVersionSubmodules>
           </configuration>
