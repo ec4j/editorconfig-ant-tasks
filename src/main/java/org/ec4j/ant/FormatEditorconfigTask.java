@@ -51,7 +51,7 @@ public class FormatEditorconfigTask extends AbstractEditorconfigTask {
     /** {@inheritDoc} */
     @Override
     protected ViolationHandler createHandler() {
-        return new FormattingHandler(backup, backupSuffix);
+        return new FormattingHandler(backup, backupSuffix, log);
     }
 
     /** {@inheritDoc} */

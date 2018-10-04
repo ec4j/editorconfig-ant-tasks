@@ -75,8 +75,7 @@
     <!-- Dependency versions in alphabectic order -->
     <version.junit>4.12</version.junit>
     <version.org.apache.ant>1.8.0</version.org.apache.ant>
-    <version.org.ec4j.maven>0.0.5</version.org.ec4j.maven>
-    <version.org.slf4j>1.7.5</version.org.slf4j>
+    <version.org.ec4j.maven>0.0.6</version.org.ec4j.maven>
 
     <!-- Plugins and their dependencies -->
     <version.asciidoctor-maven-plugin>1.5.6</version.asciidoctor-maven-plugin>
@@ -85,8 +84,10 @@
     <version.maven-checkstyle-plugin>2.17</version.maven-checkstyle-plugin>
     <version.maven-clean-plugin>2.6.1</version.maven-clean-plugin>
     <version.maven-compiler-plugin>3.3</version.maven-compiler-plugin>
+    <version.maven-dependency-plugin>3.1.1</version.maven-dependency-plugin>
     <version.maven-deploy-plugin>2.8.2</version.maven-deploy-plugin>
     <version.maven-enforcer-plugin>1.4.1</version.maven-enforcer-plugin>
+    <version.maven-failsafe-plugin>2.22.0</version.maven-failsafe-plugin>
     <version.maven-gpg-plugin>1.6</version.maven-gpg-plugin>
     <version.maven-install-plugin>2.5.2</version.maven-install-plugin>
     <version.maven-jar-plugin>2.6</version.maven-jar-plugin>
@@ -161,6 +162,12 @@
       </dependency>
 
       <dependency>
+        <groupId>org.apache.ant</groupId>
+        <artifactId>ant-testutil</artifactId>
+        <version>${version.org.apache.ant}</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.ec4j.maven</groupId>
         <artifactId>ec4j-lint-api</artifactId>
         <version>${version.org.ec4j.maven}</version>
@@ -170,12 +177,6 @@
         <groupId>org.ec4j.maven</groupId>
         <artifactId>ec4j-linters</artifactId>
         <version>${version.org.ec4j.maven}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <version>${version.org.slf4j}</version>
       </dependency>
 
     </dependencies>
@@ -189,6 +190,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.apache.ant</groupId>
+      <artifactId>ant-testutil</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.ec4j.maven</groupId>
       <artifactId>ec4j-lint-api</artifactId>
     </dependency>
@@ -196,11 +203,6 @@
     <dependency>
       <groupId>org.ec4j.maven</groupId>
       <artifactId>ec4j-linters</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
     </dependency>
 
   </dependencies>
@@ -310,6 +312,12 @@ limitations under the License.</inlineHeader>
 
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>${version.maven-dependency-plugin}</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-deploy-plugin</artifactId>
           <version>${version.maven-deploy-plugin}</version>
         </plugin>
@@ -318,6 +326,12 @@ limitations under the License.</inlineHeader>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
           <version>${version.maven-enforcer-plugin}</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>${version.maven-failsafe-plugin}</version>
         </plugin>
 
         <plugin>
@@ -489,7 +503,47 @@ limitations under the License.</inlineHeader>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-dependencies</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <excludeArtifactIds>ant,ant-testutil,ant-launcher,junit,hamcrest-core</excludeArtifactIds>
+              <outputDirectory>${project.build.directory}/libs</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>${version.maven-failsafe-plugin}</version>
+        <configuration>
+          <includes>
+            <include>**/*Test.java</include>
+          </includes>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+            <skip>true</skip><!-- we have only integration tests and we use failsafe plugin for them -->
+        </configuration>
       </plugin>
 
       <plugin>

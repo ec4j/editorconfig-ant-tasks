@@ -15,15 +15,11 @@
 # limitations under the License.
 #
 
+root = true
 
-environment:
-  JAVA_HOME: C:\Program Files\Java\jdk1.7.0
-
-install:
-  - cmd: SET PATH=C:\Users\appveyor\.m2\wrapper\dists\apache-maven-3.5.3-bin\2c22a6s60afpuloj4v181qvild\apache-maven-3.5.3\bin;%JAVA_HOME%\bin;%PATH%
-  
-build_script:
-  - .\mvnw.cmd clean verify -Dhttps.protocols=TLSv1,TLSv1.1,TLSv1.2 -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
-
-cache:
-  - C:\Users\appveyor\.m2\wrapper
+[*]
+end_of_line = lf
+trim_trailing_whitespace = true
+insert_final_newline = true
+indent_style = space
+indent_size = 2
