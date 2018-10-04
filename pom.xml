@@ -126,9 +126,6 @@
     <license.failIfMissing>true</license.failIfMissing>
     <license.failIfUnknown>true</license.failIfUnknown>
 
-    <!-- -Xdoclint:none disables javadoc validation -->
-    <javadoc.doclint>-Xdoclint:none</javadoc.doclint>
-
     <!-- nexus-staging-maven-plugin -->
     <autoReleaseAfterClose>true</autoReleaseAfterClose>
 
@@ -365,6 +362,10 @@ limitations under the License.</inlineHeader>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>${version.maven-javadoc-plugin}</version>
+          <configuration>
+            <additionalparam>-Xdoclint:none</additionalparam>
+            <additionalJOption>-Xdoclint:none</additionalJOption>
+          </configuration>
         </plugin>
 
         <plugin>
