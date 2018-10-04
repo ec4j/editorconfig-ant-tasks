@@ -98,7 +98,7 @@
     <version.maven-resources-plugin>2.7</version.maven-resources-plugin>
     <version.maven-scm-plugin>1.9.4</version.maven-scm-plugin>
     <version.maven-site-plugin>3.6</version.maven-site-plugin>
-    <version.maven-source-plugin>2.4</version.maven-source-plugin>
+    <version.maven-source-plugin>3.0.1</version.maven-source-plugin>
     <version.maven-surefire-plugin>2.20.1</version.maven-surefire-plugin>
     <version.nexus-staging-maven-plugin>1.6.7</version.nexus-staging-maven-plugin>
     <version.org.codehaus.buildnumber-maven-plugin>1.4</version.org.codehaus.buildnumber-maven-plugin>
@@ -438,10 +438,6 @@ limitations under the License.</inlineHeader>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
           <version>${version.maven-source-plugin}</version>
-          <configuration>
-            <!-- disable accidental use, must use takari-lifecycle -->
-            <skipSource>true</skipSource>
-          </configuration>
         </plugin>
 
         <plugin>
@@ -583,6 +579,34 @@ limitations under the License.</inlineHeader>
                 <phase>verify</phase>
                 <goals>
                   <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <configuration>
+              <additionalparam>${javadoc.doclint}</additionalparam>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
                 </goals>
               </execution>
             </executions>
