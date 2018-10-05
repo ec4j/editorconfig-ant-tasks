@@ -21,7 +21,22 @@ https://github.com/ec4j/editorconfig-ant-tasks/issues[report] them :)
 
 `editorconfig-ant-tasks` requires Java 7+ and Ant 1.8.0+.
 
-A basic `build.xml` file:
+
+=== Download the tasks and its dependencies
+
+[subs=+macros]
+----
+wget http://central.maven.org/maven2/org/ec4j/ant/editorconfig-ant-tasks/0.0.1/editorconfig-ant-tasks-0.0.1.jar
+mkdir -p libs
+cd libs
+wget http://central.maven.org/maven2/org/antlr/antlr4-runtime/4.7/antlr4-runtime-4.7.jar
+wget http://central.maven.org/maven2/org/ec4j/core/ec4j-core/0.0.1/ec4j-core-0.0.1.jar
+wget http://central.maven.org/maven2/org/ec4j/maven/ec4j-lint-api/0.0.6/ec4j-lint-api-0.0.6.jar
+wget http://central.maven.org/maven2/org/ec4j/maven/ec4j-linters/0.0.6/ec4j-linters-0.0.6.jar
+----
+
+
+=== Basic `build.xml` file:
 
 [source,xml]
 ----
@@ -32,12 +47,6 @@ A basic `build.xml` file:
       <fileset dir="...">
         <include name="editorconfig-ant-tasks-*.jar"/>
         <include name="libs/*.jar"/>
-        <!-- the libs directory should contain:
-            antlr4-runtime-4.7.jar
-            ec4j-core-0.0.1.jar
-            ec4j-lint-api-0.0.6.jar
-            ec4j-linters-0.0.6.jar
-        -->
       </fileset>
     </classpath>
   </taskdef>
@@ -73,9 +82,11 @@ ant editorconfigFormat
 
 TODO
 
+
 == How it works
 
 See https://github.com/ec4j/editorconfig-maven-plugin#how-it-works
+
 
 == How to build
 
